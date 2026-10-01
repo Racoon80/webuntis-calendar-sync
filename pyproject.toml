@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "webuntis-nextcloud-sync"
+version = "0.1.0"
+description = "WebUntis timetable, exams and homework into Nextcloud calendars and tasks"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = ["requests>=2.31", "defusedxml>=0.7", "tzdata"]
+
+[project.scripts]
+webuntis-nextcloud-sync = "webuntis_nextcloud_sync.__main__:main"

@@ -1,0 +1,19 @@
+services:
+  webuntis-nextcloud-sync:
+    image: ghcr.io/racoon80/webuntis-nextcloud-sync:latest
+    # build: .
+    container_name: webuntis-nextcloud-sync
+    restart: unless-stopped
+    env_file: .env              # WEBUNTIS_USER, WEBUNTIS_SECRET, NEXTCLOUD_USER, NEXTCLOUD_APP_PASSWORD
+    environment:
+      WEBUNTIS_SERVER: myschool.webuntis.com
+      WEBUNTIS_SCHOOL: myschool
+      NEXTCLOUD_URL: https://cloud.example.com
+      LANGUAGE_TITLES: lb       # lb, de, fr or en
+      SYNC_INTERVAL: 3600       # seconds
+      LESSON_DAYS: 28           # days ahead
+      HOMEWORK_DAYS: 42
+      EXAM_DAYS: 120
+      TZ: Europe/Luxembourg
+    volumes:
+      - ./data:/data
