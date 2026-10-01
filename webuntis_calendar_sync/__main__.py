@@ -277,7 +277,7 @@ def cmd_google_login() -> int:
     client_id, client_secret = env("GOOGLE_CLIENT_ID"), env("GOOGLE_CLIENT_SECRET")
     print("1. Open this link in a browser and allow access:\n")
     print("   " + google.authorize_url(client_id) + "\n")
-    print("2. Google then sends the browser to http://localhost:8765/?… — that page will")
+    print("2. Google then sends the browser to http://127.0.0.1:8765/?… — that page will")
     print("   not load, which is fine. Copy the whole address from the address bar.\n")
     pasted = input("3. Paste it here: ")
     token = google.exchange_code(client_id, client_secret, google.code_from(pasted))

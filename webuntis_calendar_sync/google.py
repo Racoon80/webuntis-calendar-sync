@@ -23,7 +23,7 @@ CAL_API = "https://www.googleapis.com/calendar/v3"
 TASKS_API = "https://tasks.googleapis.com/tasks/v1"
 SCOPES = ("https://www.googleapis.com/auth/calendar.app.created "
           "https://www.googleapis.com/auth/tasks")
-REDIRECT_URI = "http://localhost:8765/"
+REDIRECT_URI = "http://127.0.0.1:8765/"  # loopback IP, as Google recommends for desktop apps
 
 
 class GoogleError(Exception):

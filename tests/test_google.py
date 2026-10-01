@@ -129,10 +129,10 @@ def test_rendering_is_stable(fake):
 def test_oauth_helpers():
     url = google.authorize_url("my-client")
     assert "calendar.app.created" in url and "auth%2Ftasks" in url and "access_type=offline" in url
-    assert google.code_from("http://localhost:8765/?code=abc123&scope=x") == "abc123"
+    assert google.code_from("http://127.0.0.1:8765/?code=abc123&scope=x") == "abc123"
     assert google.code_from("  abc123 ") == "abc123"
     with pytest.raises(GoogleError):
-        google.code_from("http://localhost:8765/?error=access_denied")
+        google.code_from("http://127.0.0.1:8765/?error=access_denied")
 
 
 def test_event_id_mapping():

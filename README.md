@@ -276,7 +276,7 @@ docker compose run --rm webuntis-calendar-sync google-login
 ```
 
 1. Open the printed link in any browser, choose the Google account, allow access.
-2. The browser then goes to `http://localhost:8765/?code=…` and shows an error page —
+2. The browser then goes to `http://127.0.0.1:8765/?code=…` and shows an error page —
    that's expected. **Copy the whole address** from the address bar.
 3. Paste it into the terminal. Done: the login is stored in `data/google-token.json`.
 
@@ -501,4 +501,4 @@ Pushes to `main` run the tests and publish the multi-arch image to
 
 ## License
 
-[MIT](LICENSE). Not affiliated with Untis GmbH, Nextcloud GmbH, Apple or Google.
+[MIT](LICENSE). Not affiliated with Untis GmbH, Nextcloud GmbH, Apple or Google. See also the [privacy policy](PRIVACY.md).
