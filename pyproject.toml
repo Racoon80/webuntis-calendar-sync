@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "webuntis-calendar-sync"
-version = "0.2.0"
+version = "0.2.1"
 description = "WebUntis timetable, exams and homework into Nextcloud, any CalDAV server or Google Calendar / Tasks"
 license = "MIT"
 requires-python = ">=3.11"

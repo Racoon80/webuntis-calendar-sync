@@ -197,8 +197,9 @@ principal → calendar home) and creates the three calendars.
 > Tested with Nextcloud and Radicale. The other providers follow the same standard
 > and should work — if one doesn't, please open an issue with the log line.
 
-The Google target is new in 0.2; it is tested against a simulated API, so feedback
-from real use is very welcome.
+The Google target is tested with the test suite and with a real Google account
+(167 lessons, 5 exams, 12 homework tasks; second run writes nothing; no reminders;
+the app cannot list the account's other calendars).
 
 Add to `.env`:
 
@@ -276,8 +277,9 @@ docker compose run --rm webuntis-calendar-sync google-login
 ```
 
 1. Open the printed link in any browser, choose the Google account, allow access.
-2. The browser then goes to `http://127.0.0.1:8765/?code=…` and shows an error page —
-   that's expected. **Copy the whole address** from the address bar.
+2. The browser then goes to `http://127.0.0.1:8765/?code=…` and shows *"This site can't
+   be reached"* — that's expected. **Copy the whole address from the address bar**
+   (not the error text) — it starts with `http://127.0.0.1:8765/?`.
 3. Paste it into the terminal. Done: the login is stored in `data/google-token.json`.
 
 Homework goes to a Google Tasks list (*Google Calendar → Tasks*, the Tasks app, Gmail
@@ -436,6 +438,9 @@ Version 0.1 was called **webuntis-nextcloud-sync** and only knew Nextcloud.
 | `the server refused to create the calendar` | Create the calendars yourself and set `CALDAV_CALENDAR_URL_*` (4b). |
 | Homework missing on iCloud | Set `CALDAV_HOMEWORK_AS: events`. |
 | `not logged in to Google` | Run `google-login` (4c.5). |
+| `Error 400: redirect_uri_mismatch` during the Google login | The OAuth client is not of type **Desktop app**. Create a new one (4c.4). |
+| `Error 403: access_denied` — *app is being tested* | The app is still in *Testing*: publish it (4c.3), or add your account as a test user. |
+| *"Publish app"* is greyed out | Fill in the app home page and privacy policy link on the **Branding** page first (the repo URL and its `PRIVACY.md` work for personal use). |
 | `Google token refresh failed: invalid_grant` | The login expired or was revoked. If it happens weekly, the app is still in *Testing* — publish it (4c.3), then `google-login` again. |
 | Google `HTTP 403 … has not been used in project … or it is disabled` | Enable the Calendar / Tasks API (4c.2). |
 | `PermissionError … /data/…` | `sudo chown -R 1000:1000 data` |
