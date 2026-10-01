@@ -3,12 +3,13 @@ several languages (lb, de, fr, en)."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from zoneinfo import ZoneInfo
 
 from .untis import Exam, Homework, Lesson
 
-PRODID = "-//webuntis-nextcloud-sync//LB"
+PRODID = "-//webuntis-calendar-sync//LB"
 
 TEXTS = {
     "lb": {"cancelled": "❌ Fält aus", "changed": "Ännerung", "lesson": "Stonn", "exam": "Prüfung",
@@ -81,73 +82,120 @@ def _wrap(component: str, props: list[tuple[str, str]]) -> str:
     return body
 
 
-def _desc(*parts: tuple[str, str]) -> str:
-    return _esc("\n".join(f"{label}: {value}" for label, value in parts if value))
+@dataclass
+class Text:
+    """What an entry says, independent of the output format."""
+    summary: str
+    description: str
+    location: str = ""
+    cancelled: bool = False
+    changed: bool = False
 
 
-def lesson(l: Lesson, tz: ZoneInfo, lang: str = "lb") -> str:
+def _lines(*parts: tuple[str, str]) -> str:
+    return "\n".join(f"{label}: {value}" for label, value in parts if value)
+
+
+def lesson_text(l: Lesson, lang: str = "lb") -> Text:
     t = texts(lang)
     subject = l.subject or l.subject_long or t["lesson"]
     if l.code == "cancelled":
-        summary, status = f"{t['cancelled']}: {subject}", "CANCELLED"
+        summary = f"{t['cancelled']}: {subject}"
     elif l.code == "irregular":
-        summary, status = f"🔄 {subject} ({t['changed']})", "CONFIRMED"
+        summary = f"🔄 {subject} ({t['changed']})"
     else:
-        summary, status = subject, "CONFIRMED"
-    return _wrap("VEVENT", [
-        ("UID", f"webuntis-lesson-{l.id}"),
-        ("SUMMARY", _esc(summary)),
-        ("DTSTART", _utc(l.day, l.start, tz)),
-        ("DTEND", _utc(l.day, l.end, tz)),
-        ("LOCATION", _esc(", ".join(l.rooms))),
-        ("DESCRIPTION", _desc((t["subject"], l.subject_long or l.subject),
-                              (t["teacher"], ", ".join(l.teachers)),
-                              (t["class"], ", ".join(l.classes)),
-                              (t["info"], l.info))),
-        ("STATUS", status),
-        ("TRANSP", "OPAQUE"),
-    ])
+        summary = subject
+    return Text(summary,
+                _lines((t["subject"], l.subject_long or l.subject),
+                       (t["teacher"], ", ".join(l.teachers)),
+                       (t["class"], ", ".join(l.classes)),
+                       (t["info"], l.info)),
+                ", ".join(l.rooms), l.code == "cancelled", l.code == "irregular")
 
 
-def exam(e: Exam, tz: ZoneInfo, lang: str = "lb") -> str:
+def exam_text(e: Exam, lang: str = "lb") -> Text:
     t = texts(lang)
     kind = e.exam_type or t["exam"]
     summary = f"📝 {kind}: {e.subject}" if e.subject else f"📝 {e.name or kind}"
-    if e.start and e.end:
-        when = [("DTSTART", _utc(e.day, e.start, tz)), ("DTEND", _utc(e.day, e.end, tz))]
-    else:
-        nxt = date.fromordinal(e.day.toordinal() + 1)
-        when = [("DTSTART;VALUE=DATE", e.day.strftime("%Y%m%d")),
-                ("DTEND;VALUE=DATE", nxt.strftime("%Y%m%d"))]
-    return _wrap("VEVENT", [
-        ("UID", f"webuntis-exam-{e.id}"),
-        ("SUMMARY", _esc(summary)),
-        *when,
-        ("LOCATION", _esc(", ".join(e.rooms))),
-        ("DESCRIPTION", _desc((t["subject"], e.subject), (t["title"], e.name),
-                              (t["type"], e.exam_type), (t["teacher"], ", ".join(e.teachers)),
-                              (t["info"], e.text))),
-        ("STATUS", "CONFIRMED"),
-    ])
+    return Text(summary,
+                _lines((t["subject"], e.subject), (t["title"], e.name), (t["type"], e.exam_type),
+                       (t["teacher"], ", ".join(e.teachers)), (t["info"], e.text)),
+                ", ".join(e.rooms))
 
 
-def homework(h: Homework, lang: str = "lb") -> str:
+def homework_text(h: Homework, lang: str = "lb") -> Text:
     t = texts(lang)
     first = (h.text.splitlines() or [""])[0].strip()
     if len(first) > 80:
         first = first[:77] + "…"
     summary = f"{h.subject}: {first}" if h.subject else (first or t["homework"])
     weekday = t["days"][h.assigned.weekday()]
+    return Text(summary,
+                _lines((t["subject"], h.subject), (t["task"], h.text), (t["remark"], h.remark),
+                       (t["assigned"], f"{weekday}, {h.assigned:%d.%m.%Y}")))
+
+
+def _next_day(d: date) -> date:
+    return date.fromordinal(d.toordinal() + 1)
+
+
+def lesson(l: Lesson, tz: ZoneInfo, lang: str = "lb") -> str:
+    x = lesson_text(l, lang)
+    return _wrap("VEVENT", [
+        ("UID", f"webuntis-lesson-{l.id}"),
+        ("SUMMARY", _esc(x.summary)),
+        ("DTSTART", _utc(l.day, l.start, tz)),
+        ("DTEND", _utc(l.day, l.end, tz)),
+        ("LOCATION", _esc(x.location)),
+        ("DESCRIPTION", _esc(x.description)),
+        ("STATUS", "CANCELLED" if x.cancelled else "CONFIRMED"),
+        ("TRANSP", "OPAQUE"),
+    ])
+
+
+def exam(e: Exam, tz: ZoneInfo, lang: str = "lb") -> str:
+    x = exam_text(e, lang)
+    if e.start and e.end:
+        when = [("DTSTART", _utc(e.day, e.start, tz)), ("DTEND", _utc(e.day, e.end, tz))]
+    else:
+        when = [("DTSTART;VALUE=DATE", e.day.strftime("%Y%m%d")),
+                ("DTEND;VALUE=DATE", _next_day(e.day).strftime("%Y%m%d"))]
+    return _wrap("VEVENT", [
+        ("UID", f"webuntis-exam-{e.id}"),
+        ("SUMMARY", _esc(x.summary)),
+        *when,
+        ("LOCATION", _esc(x.location)),
+        ("DESCRIPTION", _esc(x.description)),
+        ("STATUS", "CONFIRMED"),
+    ])
+
+
+def homework(h: Homework, lang: str = "lb") -> str:
+    """Homework as a task (VTODO) with a due date."""
+    x = homework_text(h, lang)
     props = [
         ("UID", f"webuntis-homework-{h.id}"),
-        ("SUMMARY", _esc(summary)),
+        ("SUMMARY", _esc(x.summary)),
         ("DUE;VALUE=DATE", h.due.strftime("%Y%m%d")),
         ("DTSTART;VALUE=DATE", h.assigned.strftime("%Y%m%d")),
-        ("DESCRIPTION", _desc((t["subject"], h.subject), (t["task"], h.text),
-                              (t["remark"], h.remark),
-                              (t["assigned"], f"{weekday}, {h.assigned:%d.%m.%Y}"))),
+        ("DESCRIPTION", _esc(x.description)),
         ("STATUS", "COMPLETED" if h.completed else "NEEDS-ACTION"),
     ]
     if h.completed:
         props.append(("PERCENT-COMPLETE", "100"))
     return _wrap("VTODO", props)
+
+
+def homework_event(h: Homework, lang: str = "lb") -> str:
+    """Homework as an all-day event on its due date, for servers without tasks (iCloud)."""
+    x = homework_text(h, lang)
+    summary = ("✅ " if h.completed else "📚 ") + x.summary
+    return _wrap("VEVENT", [
+        ("UID", f"webuntis-homework-{h.id}"),
+        ("SUMMARY", _esc(summary)),
+        ("DTSTART;VALUE=DATE", h.due.strftime("%Y%m%d")),
+        ("DTEND;VALUE=DATE", _next_day(h.due).strftime("%Y%m%d")),
+        ("DESCRIPTION", _esc(x.description)),
+        ("STATUS", "CONFIRMED"),
+        ("TRANSP", "TRANSPARENT"),
+    ])

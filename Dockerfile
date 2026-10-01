@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 COPY pyproject.toml ./
-COPY webuntis_nextcloud_sync ./webuntis_nextcloud_sync
+COPY webuntis_calendar_sync ./webuntis_calendar_sync
 RUN pip install . \
  && useradd --uid 1000 --create-home app \
  && mkdir -p /data && chown app /data
@@ -16,7 +16,7 @@ USER app
 VOLUME ["/data"]
 
 HEALTHCHECK --interval=10m --timeout=10s --start-period=2m \
-  CMD ["webuntis-nextcloud-sync", "health"]
+  CMD ["webuntis-calendar-sync", "health"]
 
-ENTRYPOINT ["webuntis-nextcloud-sync"]
+ENTRYPOINT ["webuntis-calendar-sync"]
 CMD ["run"]

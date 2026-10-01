@@ -22,7 +22,7 @@ from datetime import date, datetime
 import requests
 
 TIMEOUT = 30
-USER_AGENT = "webuntis-nextcloud-sync"
+USER_AGENT = "webuntis-calendar-sync"
 ELEMENT_TYPES = {"KLASSE": 1, "TEACHER": 2, "SUBJECT": 3, "ROOM": 4, "STUDENT": 5}
 
 
