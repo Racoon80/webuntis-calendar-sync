@@ -68,13 +68,17 @@ def _utc(day: date, hm: tuple[int, int], tz: ZoneInfo) -> str:
     return local.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
+# On purpose there is never a VALARM: Nextcloud turns alarms into push and e-mail
+# reminders, and notifications are meant to come from somewhere else.
 def _wrap(component: str, props: list[tuple[str, str]]) -> str:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", f"PRODID:{PRODID}", f"BEGIN:{component}",
              f"DTSTAMP:{stamp}"]
     lines += [_fold(f"{k}:{v}") for k, v in props if v]
     lines += [f"END:{component}", "END:VCALENDAR", ""]
-    return "\r\n".join(lines)
+    body = "\r\n".join(lines)
+    assert "BEGIN:VALARM" not in body
+    return body
 
 
 def _desc(*parts: tuple[str, str]) -> str:

@@ -83,8 +83,20 @@ Titles and descriptions come in **Luxembourgish** (default), **German**, **Frenc
 5. The container **never touches other calendars** — only the three it created
    (their internal names all start with `webuntis-`).
 
-It **does not send notifications.** Use your calendar app's reminders, or an
-automation (Home Assistant, n8n, …) that reads the calendars.
+It **does not send notifications — and doesn't make Nextcloud send any either:**
+
+- No entry ever contains a reminder (`VALARM`), so Nextcloud creates no push or
+  e-mail reminders for these calendars.
+- The sync writes with the account's own app password. Nextcloud doesn't notify
+  people about changes they made themselves, so the hourly updates don't trigger
+  activity notifications or e-mails.
+- The only message you'll see is Nextcloud's one-time security notice that a new
+  app password was created (step 4).
+
+If you want reminders, use an automation (Home Assistant, n8n, …) that reads the
+calendars. Note that phones can add their *own* default alerts to synced events
+(iPhone: *Settings → Calendar → Default Alert Times*); set those to *None* if you
+don't want them.
 
 ## Requirements
 
@@ -373,8 +385,9 @@ So they can be ticked off, and so they show up in task/reminder apps with their 
 date.
 
 **Notifications at 6:40 with today's timetable?**
-Not built in on purpose. Your calendar app can remind you, or an automation can read
-the calendars and send whatever you like.
+Not built in on purpose, and the calendars never trigger Nextcloud reminders (see
+[How it works](#how-it-works)). An automation can read the calendars and send
+whatever you like.
 
 ## Development
 
