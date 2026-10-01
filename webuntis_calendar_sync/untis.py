@@ -48,6 +48,13 @@ def _time(value: int | str) -> tuple[int, int]:
     return v // 100, v % 100
 
 
+def _exam_id(e: dict) -> int:
+    """A stable id for exams WebUntis returns with id 0 (seen with student accounts)."""
+    key = "|".join(str(e.get(k) or "") for k in
+                   ("examDate", "startTime", "subject", "examType", "name"))
+    return int(hashlib.sha1(key.encode()).hexdigest()[:12], 16)
+
+
 @dataclass
 class Lesson:
     id: int
@@ -200,7 +207,7 @@ class UntisClient:
         items = []
         for e in data.get("exams") or []:
             items.append(Exam(
-                id=e["id"],
+                id=e.get("id") or _exam_id(e),
                 day=_date(e["examDate"]),
                 start=_time(e["startTime"]) if e.get("startTime") else None,
                 end=_time(e["endTime"]) if e.get("endTime") else None,
